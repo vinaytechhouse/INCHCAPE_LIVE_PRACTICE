@@ -1,0 +1,167 @@
+1. Open PBI Desktop, Open the given PBIX file
+2. Go to Table View-> Ensure all tables having proper shape
+3. Go to Model View--> look at one by one dimension column with emp table, if values match, then connect.
+
+	At the time of age group table, there is no direct match, hence we need to create a new column in employee table
+	and then join with agegroup table.
+
+	Emp Table->right click->new column-> write the below expression
+	AGeGroupID=switch(True, Employee[Age]<=31,1,Employee[Age]<=40,2,Employee[Age]<=150,3)
+
+	Connect this column with AgeGroupId in AgeGroup table [model view]
+
+	Formula explanation:
+	COnditional evaluation in DAX: If (single condition) and Switch (multiple conditions)
+	True: Bypasses the condition always
+	Switch returns result after first match.
+
+4. Create Calculated MEasures and Columns for the new hires analysis
+
+	Emp table-> New column->write the below formula
+
+	 isNewHire = IF(YEAR([date]) = YEAR([HireDate]) && MONTH([date])=MONTH([HireDate]), 1)
+
+	Note: Ensure the column is having only Blanks and 1 values
+
+5. Create new table for all measures
+	
+	Home menu->New Table->CLick grid, take one column and table name: New Hires Analysis->Ok
+
+	Go to New Hires Analysis table and create one by one measure like below:
+
+
+	New Hires analysis table-> New measure
+			New Hires = SUM(Employee[isNewHire])
+
+	New Hires analysis table-> New measure
+
+			New Hires SPLY = CALCULATE([New Hires],SAMEPERIODLASTYEAR('Date'[Date]))
+
+	New Hires analysis table-> New measure
+
+			New Hires YoY Var = [New Hires]-[New Hires SPLY]
+
+	New Hires analysis table-> New measure
+		New Hires YoY % Change = DIVIDE([New Hires YoY Var], [New Hires SPLY])
+
+
+	New Hires analysis table-> New measure
+		EmpCount = CALCULATE(COUNT(Employee[EmplID]), FILTER(ALL('Date'[PeriodNumber]), 'Date'[PeriodNumber] = MAX('Date'[PeriodNumber])))
+
+	New Hires analysis table-> New measure	
+
+	Actives = CALCULATE([EmpCount], FILTER(Employee, ISBLANK(Employee[TermDate])))
+
+	New Hires analysis table-> New measure	
+	Actives SPLY = CALCULATE([Actives], SAMEPERIODLASTYEAR('Date'[Date]))
+
+	New Hires analysis table-> New measure
+		Actives YoY Var = [Actives]-[Actives SPLY]
+
+	New Hires analysis table-> New measure
+		Actives YoY % Change = DIVIDE([Actives YoY Var], [Actives SPLY])
+
+
+Note: Remove the EID column, so that measure group table identified seperately
+
+6. Go to Report view
+
+	Take a textbox and specify "New Hires Analysis" [Insert menu->Textbox]
+
+	a) Take two slicers with slicer style as Dropdown
+		One for Year and Another one for Month
+
+	b) Take Line and CLustered Column Chart
+
+		X Axis: Month
+		COlumn Y-Axis: New Hires, New Hires SPLY
+		Line Y-Axis: New Hires YoY Var
+		ToolTip:	Year --> Maximum, Qtr
+
+		General Section-> Visual Border ON
+	c) Line Chart
+		X Axis: Month Name
+		Y Axis: New Hires
+		Legend: FP Desc
+		
+		Note: It now shows Full time and Part time individual new hires trend analysis
+
+		Multiple measures (Y and Secondary Y) or multiple categories (Legend) only possible, bot not combo.
+
+
+	d)Pie Chart
+		Legend: Gender table Gender column
+		Values: New Hires
+		Note: Ensure Gender table ID connected Employee table Gender Column
+		SLicer year and verify the values
+
+	e) Go to BU Table--> New COlumn->
+			Region = mid(BU[RegionSeq],3,len(BU[RegionSeq])-2)
+
+			Mid: Will bring middle characters from the specicifed posuition to the length given
+	
+				mid("1-North",3, 7-2)=mid("1-North",3,5)
+
+		Note: In the Power Query level, we can use split to split the information, still I would like to show DAX
+			usage, hence this example.
+
+		
+		Take Line and Stacked Column Chart
+			X Axis: Region from BU table
+			Y Axis: NEw Hires
+			Line Y-Axis: Actives YoY Var
+			Legend: Ethnicity
+
+		Note: Slice Year and Month and see the result
+
+	f) Take Waterfall chart
+		Category: AgeGroup
+		BreakDown: Year
+		Y-Axis: New Hires
+
+
+
+	g) Go to each visual, general section, title : Keep a meaningful title so that users will understand easily
+
+	***ONCE DEVELOPMENT IS COMPLETED CLOUD STORAGE HAPPENS*****
+
+	h) Go to app.powerbi.coo, connect using the below credentials
+			user name: vinaytech_0202@vinaytechhouse.com
+			password: vinaytech@2023
+
+		Go to left handside panel--> Workspaces->New Workspace-> Give any name-> Save.
+
+		Go to the workspace-> Upload menu tab-> Browse--> Browse the current live practice file.
+
+	****ONCE STORED AND VERIFIED, SHARING IN ADVANCED (A FEW COMPANIES) APPSPACE SHARING***
+
+	Workspace--> "..."-> Create App
+		Setup: 
+				Name: Any name
+				Desc: Any
+				Advanced Settings:
+					Navigation : Expand By Default
+					Global app setting: Install the app automatically
+		Content:
+			Browse and choose the report only
+		Audience:
+			RIghthandside-> Add users: vinaytech_0702@vinaytechhouse.com
+			Click Publish
+
+	*********OTHER USER OR CUSTOMER BROWSING***********
+	Open another browser and connect using the below
+			User name: vinaytech_0702@vinaytechhouse.com
+			Password: vinaytech@2024
+	Go to APPs in the lefthand side pane-> Click on the app shared to him-> the user will see the current report in a 		dashboard format
+				
+	
+
+
+
+
+
+
+
+
+
+
